@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Address Input and Mapping</title>
+        <style>
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            .group-label {
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Address Input and Mapping</h1>
+        <div>
+            <label for="startAddress">Starting Address:</label>
+            <input type="text" id="startAddress" placeholder="Enter a starting address">
+            <br>
+            <label for="addressInput">Enter Destination Address:</label>
+            <input type="text" id="addressInput" placeholder="Enter a destination address">
+            <button onclick="calculateDistance()">Calculate Distance</button>
+        </div>
+        <table id="addressTable">
+            <thead>
+                <tr>
+                    <th>Starting Address</th>
+                    <th>Destination Longitude</th>
+                    <th>Destination Latitude</th>
+                    <th>Destination</th>
+                    <th>Starting Latitude</th>
+                    <th>Starting Longitude</th>
+                    <th>Distance (km)</th>
+                    <th>Duration (min)</th>
+                    <th>Group</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Address rows will be added here -->
+            </tbody>
+        </table>
+    
+        <!-- Group Labels -->
+        <hr>
+        <div class="group-label">
+            <label for="groupSelect">Forum for scheduling:</label>
+            <select id="groupSelect" onchange="showGroupForm()">
+                <option value="-1">Select a Group</option>
+            </select>
+        </div>
+       
+        <div id="groupForms"><form>
+            <label for="full_name">Full Name:</label>
+            <input type="text" id="full_name" name="full_name" required><br><br>
+    
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br><br>
+    
+            <label for="phone_number">Phone Number:</label>
+            <input type="tel" id="phone_number" name="phone_number" required><br><br>
+    
+            <label for="leave_time">When would you like to leave the house?:</label>
+            <input type="time" id="leave_time" name="leave_time" required><br><br>
+    
+            <label for="time_strictness">How strict is your time?</label><br>
+            <input type="checkbox" id="strict" name="time_strictness" value="strict">
+            <label for="strict">Strict</label><br>
+    
+            <input type="checkbox" id="medium" name="time_strictness" value="medium">
+            <label for="medium">Medium</label><br>
+    
+            <input type="checkbox" id="flexible" name="time_strictness" value="flexible">
+            <label for="flexible">Flexible</label><br><br>
+    
+            <p>Contact your possible rideshares at: <a href="url">email</a><span id="uber_buddies"></span></p>
+    
+            <input type="submit" value="Submit">
+        </form>
+        </div>
+    
+        <hr>
+    
+        <div class="header">
+            <div class="name">Eco Stats</div>
+        </div>
+        <div class="panel">        
+            <input type="text" id="car-brand-input" placeholder="Car Name">
+        </div>
+        <button class="graph" onclick="showChart()()">Show Chart</button>
+        <div id="graph-container" class="graph-container" style="display:none;">
+            <canvas id="myChart"></canvas>
+        </div>
+    
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+        <script>
+            let myChart = null; 
+            const carData = {
+                'Ferrari': [10, 20, 30],
+                'Volvo': [30, 25, 10],
+                //etc, hope it will be helpful
+            };
+            function showChart(carBrand) {
+                const container = document.getElementById('graph-container');
+                const data = carData[carBrand];
+    
+                if (myChart === null) {
+                    const ctx = document.getElementById('myChart').getContext('2d');
+                    myChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['CO2', '2', '3'],
+                            datasets: [{
+                                label: 'Car Eco Impact',
+                                data: data,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(255, 206, 86, 0.2)',
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                    container.style.display = 'block';
+                } else {
+                    myChart.destroy();
+                    myChart = null;
+                    container.style.display = 'none';
+                }
+            }
+            function getCarBrand() {
+                const carBrand = document.getElementById('car-brand-input').value;
+                showChart(carBrand);
+            }
+    
+    
+            const groups = [];
+    
+            function calculateDistance() {
+                const startAddress = document.getElementById('startAddress').value;
+                const destinationInput = document.getElementById('addressInput').value;
+    
+                // Fetch latitude and longitude for destination
+                fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(destinationInput)}&key=AIzaSyAbsTnYE77eA6eKng20eYd_UCsiYO8EXnk`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK' && data.results.length > 0) {
+                            const destResult = data.results[0];
+                            const destLatitude = destResult.geometry.location.lat;
+                            const destLongitude = destResult.geometry.location.lng;
+    
+                            // Fetch latitude and longitude for starting address
+                            fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(startAddress)}&key=AIzaSyAbsTnYE77eA6eKng20eYd_UCsiYO8EXnk`)
+                                .then(response => response.json())
+                                .then(startData => {
+                                    if (startData.status === 'OK' && startData.results.length > 0) {
+                                        const startResult = startData.results[0];
+                                        const startLatitude = startResult.geometry.location.lat;
+                                        const startLongitude = startResult.geometry.location.lng;
+    
+                                        // Calculate distance and duration from startAddress to destination
+                                        const service = new google.maps.DistanceMatrixService();
+                                        service.getDistanceMatrix({
+                                            origins: [startAddress],
+                                            destinations: [destinationInput],
+                                            travelMode: google.maps.TravelMode.DRIVING,
+                                            unitSystem: google.maps.UnitSystem.METRIC,
+                                        }, (response, status) => {
+                                            if (status === 'OK') {
+                                                const distance = response.rows[0].elements[0].distance.text;
+                                                const duration = response.rows[0].elements[0].duration.text;
+    
+                                                // Find or create a group for the current row
+                                                let groupIndex = -1;
+                                                for (let i = 0; i < groups.length; i++) {
+                                                    const group = groups[i];
+                                                    if (
+                                                        (group.startAddress === startAddress || group.destination === destinationInput) &&
+                                                        parseInt(duration) <= 10
+                                                    ) {
+                                                        groupIndex = i;
+                                                        break;
+                                                    }
+                                                }
+    
+                                                // If no matching group is found, create a new one
+                                                if (groupIndex === -1) {
+                                                    groupIndex = groups.length;
+                                                    groups.push({
+                                                        startAddress,
+                                                        destination: destinationInput,
+                                                        rows: []
+                                                    });
+                                                }
+    
+                                                // Add the data to the table and associate it with the group
+                                                const tableBody = document.querySelector('#addressTable tbody');
+                                                const newRow = tableBody.insertRow();
+                                                newRow.insertCell(0).textContent = startAddress;
+                                                newRow.insertCell(1).textContent = destinationInput;
+                                                newRow.insertCell(2).textContent = destLatitude.toFixed(6);
+                                                newRow.insertCell(3).textContent = destLongitude.toFixed(6);
+                                                newRow.insertCell(4).textContent = startLatitude.toFixed(6);
+                                                newRow.insertCell(5).textContent = startLongitude.toFixed(6);
+                                                newRow.insertCell(6).textContent = distance;
+                                                newRow.insertCell(7).textContent = duration;
+                                                newRow.insertCell(8).textContent = groupIndex;
+    
+                                                // Add the row to the group
+                                                groups[groupIndex].rows.push(newRow);
+    
+                                                // Clear the input field
+                                                document.getElementById('addressInput').value = '';
+    
+                                                // Update the group select dropdown
+                                                updateGroupSelect();
+                                            } else {
+                                                alert('Error calculating distance and duration.');
+                                            }
+                                        });
+                                    } else {
+                                        alert('Starting address not found.');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error(error);
+                                    alert('An error occurred while fetching starting address coordinates.');
+                                });
+                        } else {
+                            alert('Destination address not found.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        alert('An error occurred while fetching destination address coordinates.');
+                    });
+            }
+    
+            function updateGroupSelect() {
+                const groupSelect = document.getElementById('groupSelect');
+                groupSelect.innerHTML = '<option value="-1">Select a Group</option>';
+    
+                // Sort the groups by groupIndex
+                groups.sort((a, b) => a.groupIndex - b.groupIndex);
+    
+                // Group the groups in clusters with 3-digit separation
+                let cluster = [];
+                let prevGroupIndex = -1;
+                groups.forEach((group, index) => {
+                    if (prevGroupIndex === -1 || group.groupIndex - prevGroupIndex <= 3) {
+                        cluster.push(group);
+                    } else {
+                        // Add a link for the cluster
+                        const clusterIndex = cluster[0].groupIndex;
+                        groupSelect.innerHTML += `<option value="${clusterIndex}">Group ${clusterIndex} - ${prevGroupIndex}</option>`;
+                        cluster = [group];
+                    }
+                    prevGroupIndex = group.groupIndex;
+                });
+    
+                // Add a link for the last cluster
+                if (cluster.length > 0) {
+                    const clusterIndex = cluster[0].groupIndex;
+                    const lastGroupIndex = cluster[cluster.length - 1].groupIndex;
+                    groupSelect.innerHTML += `<option value="${clusterIndex}">Group ${clusterIndex} - ${lastGroupIndex}</option>`;
+                }
+            }
+    
+            function showGroupForm() {
+                const groupSelect = document.getElementById('groupSelect');
+                const clusterIndex = parseInt(groupSelect.value);
+    
+                if (clusterIndex === -1) {
+                    document.getElementById('groupForms').innerHTML = '';
+                } else {
+                    // Find all groups in the selected cluster
+                    const clusterGroups = groups.filter(group => {
+                        return group.groupIndex >= clusterIndex && group.groupIndex <= clusterIndex + 3;
+                    });
+    
+                    const groupForm = `
+                        <h2>Group ${clusterIndex} - ${clusterGroups[clusterGroups.length - 1].groupIndex} Form</h2>
+                        <form>
+                            <!-- Form fields for the cluster -->
+                        </form>
+                    `;
+                    document.getElementById('groupForms').innerHTML = groupForm;
+                }
+            }
+            
+        </script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAbsTnYE77eA6eKng20eYd_UCsiYO8EXnk&callback=initMap&libraries=places,distanceMatrix" async defer></script>
+        <style>
+            html{
+                height:100%;
+            }
+                body{
+                    margin:0;
+                    height:100%;
+                }        
+                .header{
+                    width:100%;
+                    height: 75px;
+                }
+    
+                }
+                .panel{
+                    position: absolute;
+                    background-color: white;
+                    height:650px;
+                    width:500px;
+                    left:70px;
+                    top:135px;
+                    border-radius: 50px;
+                }
+                .start, .end{
+                 position: relative;
+                    background-color: rgb(242, 231, 221, 0.7);
+                    top:59px;
+                    left:44px;
+                 width: 411px;
+                    height:73px;
+                    border-radius: 50px;
+                }
+                .end{
+                 position: relative;
+                    top:95px;
+                }
+                button.graph{
+                    position: absolute;
+                    top:515px;
+                    left:330px;
+                    height:25px;
+                    width:50px;
+                    border-radius: 50px;
+                }
+                .graph-container{
+                    position: absolute;
+                    top:560px;
+                    left:114px; 
+                    background-color: rgb(242, 231, 221, 0.7);
+                    width:305px;
+                    height:150px;
+                }
+                #car-brand-input{
+                    position: relative;
+                    background-color: rgb(242, 231, 221, 0.7);
+                    top:150px;
+                    left:44px;
+                    width:200px;
+                    height:36px;
+                    text-indent: 15px;
+                    border-radius: 50px;
+                    font-family:'Libre Bodoni';
+                   font-size: 25px;
+                }
+    </style>
+    </body>
+</html>    
